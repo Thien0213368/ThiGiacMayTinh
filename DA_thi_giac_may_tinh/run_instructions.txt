@@ -1,0 +1,39 @@
+====================================================================
+      HƯỚNG DẪN CHẠY WEB DEMO PHÁT HIỆN KHUYẾT TẬT YOLOv8 OBB
+====================================================================
+
+Để khởi chạy toàn bộ ứng dụng web (bao gồm Frontend và Backend), hãy làm theo các bước dưới đây:
+
+BƯỚC 1: KHỞI CHẠY BACKEND (FastAPI Python)
+------------------------------------------
+1. Mở một cửa sổ Terminal (PowerShell hoặc Command Prompt) mới.
+2. Di chuyển vào thư mục API của dự án:
+   cd d:\DA_thi_giac_may_tinh\web-demo\api
+3. Khởi chạy server FastAPI ở cổng 8003 (để đồng bộ với Proxy của Frontend):
+   - Trên Windows PowerShell:
+     $env:PYTHONIOENCODING="utf-8"
+     python -m uvicorn app:app --host 0.0.0.0 --port 8003 --reload
+   - Trên Windows Command Prompt (CMD):
+     set PYTHONIOENCODING=utf-8
+     python -m uvicorn app:app --host 0.0.0.0 --port 8003 --reload
+
+BƯỚC 2: KHỞI CHẠY FRONTEND (Node.js Express)
+--------------------------------------------
+1. Giữ cửa sổ Backend ở trên tiếp tục chạy, mở thêm một cửa sổ Terminal mới.
+2. Di chuyển vào thư mục chứa dự án web:
+   cd d:\DA_thi_giac_may_tinh\web-demo
+3. Cài đặt các thư viện Node.js cần thiết (nếu là lần đầu tiên chạy hoặc bị báo thiếu thư viện):
+   npm install
+4. Khởi chạy server Node.js:
+   node server.js
+
+BƯỚC 3: TRUY CẬP TRANG WEB
+--------------------------
+1. Mở trình duyệt web của bạn (Chrome, Edge, Firefox...).
+2. Truy cập địa chỉ:
+   http://localhost:3000
+
+--------------------------------------------------------------------
+* Lưu ý: 
+- Backend bắt buộc phải chạy ở cổng 8003 vì file server.js đã cấu hình Proxy chuyển tiếp /api sang http://localhost:8003.
+- Nhấn tổ hợp phím Ctrl + C trong cửa sổ terminal tương ứng để dừng chạy.

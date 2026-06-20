@@ -1,0 +1,27 @@
+# ============================================================
+# Requirements — Dự án Thị Giác Máy Tính
+# Phát hiện khuyết tật tấm pin năng lượng mặt trời (YOLOv8 OBB)
+# ============================================================
+
+# Core ML
+ultralytics>=8.0.0
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Computer Vision
+opencv-python>=4.8.0
+Pillow>=10.0.0
+
+# Data & Visualization
+numpy>=1.24.0
+matplotlib>=3.7.0
+pandas>=2.0.0
+pyyaml>=6.0
+
+# Grad-CAM (Buổi 5 — tùy chọn)
+grad-cam>=1.5.0
+
+# Web API (web-demo/api/)
+fastapi>=0.100.0
+uvicorn>=0.23.0
+python-multipart>=0.0.6

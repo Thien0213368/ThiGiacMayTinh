@@ -1,0 +1,17 @@
+{
+  "name": "defectdetect-obb",
+  "version": "1.0.0",
+  "description": "Phát hiện khuyết tật bề mặt tấm pin năng lượng mặt trời - YOLOv8 OBB",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^4.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

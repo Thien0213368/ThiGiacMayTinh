@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DefectDetect OBB - Phát hiện khuyết tật bề mặt tấm pin năng lượng mặt trời sử dụng YOLOv8 OBB và ảnh nhiệt hồng ngoại">
+    <title>DefectDetect OBB — Phát hiện khuyết tật bề mặt</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=5">
+</head>
+<body>
+    <!-- ========== TOP HEADER BAR ========== -->
+    <header class="top-bar" id="topBar">
+        <div class="top-bar__left">
+            <div class="logo-icon">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                    <circle cx="14" cy="14" r="13" stroke="url(#grad1)" stroke-width="2"/>
+                    <path d="M8 14 L12 10 L16 14 L20 10" stroke="#00e5ff" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    <path d="M8 18 L12 14 L16 18 L20 14" stroke="#00e5ff" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+                    <defs><linearGradient id="grad1" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#00e5ff"/><stop offset="1" stop-color="#7c4dff"/></linearGradient></defs>
+                </svg>
+            </div>
+            <div class="logo-text">
+                <span class="logo-title">DEFECT<span class="logo-highlight">DETECT</span></span>
+                <span class="logo-badge">OBB</span>
+            </div>
+            <span class="logo-subtitle">Phát hiện khuyết tật bề mặt — YOLOv8 Oriented BBox</span>
+        </div>
+        <div class="top-bar__center">
+            <div class="class-legend">
+                <span class="legend-item"><span class="legend-dot" style="background:#ffffff;border:1px solid #555"></span>BypassedSubs</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#00ffff"></span>Diode</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#ff00ff"></span>MultiHotSpot</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#00ff00"></span>Hotspot</span>
+            </div>
+        </div>
+        <div class="top-bar__right">
+            <div class="model-selector-wrap" id="modelSelectorWrap">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="#aaa"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+                <select id="modelSelector" class="model-selector-dropdown">
+                    <option value="yolov8n" selected>YOLOv8n-OBB (3.1M)</option>
+                    <option value="yolov8s">YOLOv8s-OBB (11.4M)</option>
+                    <option value="yolov8m">YOLOv8m-OBB (26.4M)</option>
+                    <option value="yolov8l">YOLOv8l-OBB (44.9M)</option>
+                    <option value="yolov8x">YOLOv8x-OBB (68.2M)</option>
+                </select>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="#aaa" style="pointer-events:none;flex-shrink:0"><path d="M3 5l3 3 3-3" stroke="#aaa" stroke-width="1.5" fill="none"/></svg>
+            </div>
+            <div class="target-badge">
+                <span>Mục tiêu P≥0.85 · R≥0.85</span>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="#69f0ae"><path d="M5.5 10 L2 6.5 L3 5.5 L5.5 8 L11 2.5 L12 3.5 Z"/></svg>
+            </div>
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span>READY</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <main class="app-layout">
+        <!-- ===== LEFT SIDEBAR ===== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__tabs">
+                <button class="sidebar-tab" id="tabUpload" data-tab="upload">TẢI LÊN</button>
+                <button class="sidebar-tab active" id="tabSample" data-tab="sample">MẪU THỬ</button>
+            </div>
+
+            <!-- Sample thumbnails -->
+            <div class="sidebar__samples" id="sampleList">
+                <div class="sample-card active" data-sample="hotspot" id="sampleHotspot">
+                    <img src="assets/sample_hotspot.jpg" alt="PCB Hotspot sample">
+                    <span class="sample-label">PCB — Hotspot</span>
+                    <span class="sample-check">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="#00e5ff"><circle cx="8" cy="8" r="7" fill="#00e5ff"/><path d="M5 8 L7 10 L11 6" stroke="#0a0e17" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+                    </span>
+                </div>
+                <div class="sample-card" data-sample="diode" id="sampleDiode">
+                    <img src="assets/sample_diode.jpg" alt="PCB Diode sample">
+                    <span class="sample-label">PCB — Diode</span>
+                </div>
+                <div class="sample-card" data-sample="multi" id="sampleMulti">
+                    <img src="assets/sample_multi.jpg" alt="PCB Multi Hot Spots sample">
+                    <span class="sample-label">PCB — Multi</span>
+                </div>
+            </div>
+
+            <!-- Upload area (hidden by default) -->
+            <div class="sidebar__upload hidden" id="uploadArea">
+                <div class="upload-dropzone" id="dropzone">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#00e5ff" stroke-width="1.5">
+                        <path d="M20 5 L20 25 M12 15 L20 5 L28 15"/>
+                        <path d="M5 30 L5 35 L35 35 L35 30"/>
+                    </svg>
+                    <p>Kéo thả ảnh hoặc click để chọn</p>
+                    <span class="upload-hint">PNG, JPG, JPEG — Tối đa 10MB</span>
+                    <input type="file" id="fileInput" accept="image/*" hidden>
+                </div>
+            </div>
+
+            <!-- Confidence slider -->
+            <div class="sidebar__confidence">
+                <div class="confidence-header">
+                    <span class="confidence-label">CONFIDENCE</span>
+                    <span class="confidence-value" id="confValue">50%</span>
+                </div>
+                <div class="confidence-slider-wrap">
+                    <input type="range" min="10" max="95" value="50" class="confidence-slider" id="confSlider">
+                </div>
+            </div>
+
+            <!-- Model info -->
+            <div class="sidebar__model-info">
+                <h4>THÔNG SỐ MODEL</h4>
+                <div class="model-stat">
+                    <span>Model</span>
+                    <span class="model-stat-val accent" id="infoModelName">YOLOv8n-OBB</span>
+                </div>
+                <div class="model-stat">
+                    <span>Params</span>
+                    <span class="model-stat-val" id="infoParams">3.1M</span>
+                </div>
+                <div class="model-stat">
+                    <span>GFLOPs</span>
+                    <span class="model-stat-val" id="infoGflops">8.4</span>
+                </div>
+                <div class="model-stat">
+                    <span>Latency</span>
+                    <span class="model-stat-val" id="infoLatency">7.6ms</span>
+                </div>
+                <div class="model-stat">
+                    <span>mAP@50</span>
+                    <span class="model-stat-val" id="infoMap">0.939</span>
+                </div>
+                <div class="model-stat">
+                    <span>mAP50-95</span>
+                    <span class="model-stat-val" id="infoMap95">0.930</span>
+                </div>
+                <div class="model-arch">
+                    <code>Backbone: CSPDarknet</code>
+                    <code>Neck: FPN + PAN</code>
+                    <code id="infoHeadCode">Head: OBBHead (x,y,w,h,θ)</code>
+                </div>
+                <!-- Model comparison badge -->
+                <div class="model-compare-badge" id="modelCompareBadge">
+                    <span class="mcb-label">vs v8n</span>
+                    <span class="mcb-diff" id="mcbDiff">—</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ===== CENTER PANEL ===== -->
+        <section class="center-panel" id="centerPanel">
+            <!-- Stats row -->
+            <div class="stats-row">
+                <div class="stat-card" id="statDefects">
+                    <div class="stat-icon">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="#00e5ff"><circle cx="8" cy="8" r="3"/></svg>
+                    </div>
+                    <span class="stat-label">KHUYẾT TẬT</span>
+                    <span class="stat-value" id="defectCount">0</span>
+                </div>
+                <div class="stat-card" id="statTime">
+                    <div class="stat-icon">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#aaa" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+                    </div>
+                    <span class="stat-label">THỜI GIAN</span>
+                    <span class="stat-value"><span id="timeValue">—</span><span class="stat-unit">ms</span></span>
+                </div>
+                <div class="stat-card" id="statConf">
+                    <div class="stat-icon">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#aaa" stroke-width="1.5"><path d="M2 12 L6 4 L10 8 L14 2"/></svg>
+                    </div>
+                    <span class="stat-label">CONFIDENCE TB</span>
+                    <span class="stat-value" id="avgConf">—</span>
+                </div>
+                <div class="stat-card" id="statClasses">
+                    <div class="stat-icon">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#aaa" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+                    </div>
+                    <span class="stat-label">LỚP PHÁT HIỆN</span>
+                    <span class="stat-value"><span id="classCount">0</span><span class="stat-fraction"> / 4</span></span>
+                </div>
+            </div>
+
+            <!-- Detection canvas / Image area -->
+            <div class="detection-area" id="detectionArea">
+                <!-- Empty state -->
+                <div class="detection-empty" id="detectionEmpty">
+                    <div class="empty-icon">
+                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="#1a3a4a" stroke-width="2">
+                            <circle cx="32" cy="32" r="28"/>
+                            <circle cx="32" cy="32" r="12" fill="#0d2030"/>
+                            <circle cx="32" cy="32" r="4" fill="#00e5ff" opacity="0.6"/>
+                        </svg>
+                    </div>
+                    <p class="empty-title">Chọn ảnh mẫu hoặc tải ảnh lên</p>
+                    <p class="empty-subtitle">Dataset: ThiGiacMayTinh2 · 377 ảnh · 4 lớp khuyết tật</p>
+                    <div class="empty-buttons">
+                        <button class="btn-sample-quick" data-sample="hotspot">PCB — Hotspot</button>
+                        <button class="btn-sample-quick" data-sample="diode">PCB — Diode</button>
+                        <button class="btn-sample-quick" data-sample="multi">PCB — Multi</button>
+                    </div>
+                </div>
+
+                <!-- Active detection view -->
+                <div class="detection-view hidden" id="detectionView">
+                    <canvas id="detectionCanvas"></canvas>
+                    <img id="detectionImage" alt="Detection result" style="display:none;">
+                </div>
+            </div>
+
+            <!-- Bottom detection bar -->
+            <div class="detection-bar hidden" id="detectionBar">
+                <div class="detection-bar__items" id="detectionBarItems">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== RIGHT PANEL ===== -->
+        <aside class="right-panel" id="rightPanel">
+            <div class="right-panel__tabs">
+                <button class="rpanel-tab active" data-rpanel="results" id="rpanelResults">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="7" r="3"/></svg>
+                    KẾT QUẢ
+                </button>
+                <button class="rpanel-tab" data-rpanel="dataset" id="rpanelDataset">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="10" height="10" rx="1"/><path d="M2 6h10M6 2v10"/></svg>
+                    DATASET
+                </button>
+                <button class="rpanel-tab" data-rpanel="metrics" id="rpanelMetrics">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12 L5 6 L8 9 L12 2"/></svg>
+                    METRICS
+                </button>
+            </div>
+
+            <!-- Results Tab -->
+            <div class="rpanel-content active" id="contentResults">
+                <div class="results-empty" id="resultsEmpty">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#2a3a4a" stroke-width="1.5"><circle cx="20" cy="20" r="16"/><path d="M20 14v6M20 24v1"/></svg>
+                    <p>Chưa có kết quả phát hiện</p>
+                </div>
+                <div class="results-list hidden" id="resultsList">
+                    <!-- Dynamically populated -->
+                </div>
+                <button class="btn-reanalyze hidden" id="btnReanalyze">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 1 1 1 3.5"/><path d="M2 12V8h4"/></svg>
+                    PHÂN TÍCH LẠI
+                </button>
+            </div>
+
+            <!-- Dataset Tab -->
+            <div class="rpanel-content" id="contentDataset">
+                <div class="dataset-section">
+                    <h4>DATASET SPLIT</h4>
+                    <div class="dataset-bar-row">
+                        <span class="ds-label"><span class="ds-dot" style="background:#40c4ff"></span>Train</span>
+                        <div class="ds-bar-track"><div class="ds-bar-fill" style="width:72.7%;background:#40c4ff"></div></div>
+                        <span class="ds-count">274</span>
+                    </div>
+                    <div class="dataset-bar-row">
+                        <span class="ds-label"><span class="ds-dot" style="background:#69f0ae"></span>Valid</span>
+                        <div class="ds-bar-track"><div class="ds-bar-fill" style="width:18.3%;background:#69f0ae"></div></div>
+                        <span class="ds-count">69</span>
+                    </div>
+                    <div class="dataset-bar-row">
+                        <span class="ds-label"><span class="ds-dot" style="background:#ff80ab"></span>Test</span>
+                        <div class="ds-bar-track"><div class="ds-bar-fill" style="width:9%;background:#ff80ab"></div></div>
+                        <span class="ds-count">34</span>
+                    </div>
+                    <p class="ds-summary">Tổng: 377 ảnh · 6 nền · 0 lỗi</p>
+                </div>
+
+                <div class="dataset-section">
+                    <h4>PHÂN BỐ LỚP (TRAIN)</h4>
+                    <div class="class-dist-chart" id="classDistChart">
+                        <div class="chart-bars">
+                            <div class="chart-bar-group">
+                                <div class="chart-bar" style="height:8%;background:#ff5252" title="Bypassed Substrings: ~96 obj"></div>
+                                <span class="chart-bar-label">C0</span>
+                            </div>
+                            <div class="chart-bar-group">
+                                <div class="chart-bar" style="height:25%;background:#69f0ae" title="Diode: ~300 obj"></div>
+                                <span class="chart-bar-label">C1 Diode</span>
+                            </div>
+                            <div class="chart-bar-group">
+                                <div class="chart-bar" style="height:20%;background:#40c4ff" title="Multi Hot Spots: ~240 obj"></div>
+                                <span class="chart-bar-label">C2</span>
+                            </div>
+                            <div class="chart-bar-group">
+                                <div class="chart-bar" style="height:100%;background:#ffd740" title="Hotspot: ~1200 obj"></div>
+                                <span class="chart-bar-label">C3 Hotspot</span>
+                            </div>
+                        </div>
+                        <div class="chart-y-axis">
+                            <span>1200</span>
+                            <span>600</span>
+                            <span>300</span>
+                            <span>0</span>
+                        </div>
+                    </div>
+                    <div class="ds-warning">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="#ffd740"><path d="M7 1 L13 13 H1 Z M7 5v4 M7 10.5v1"/></svg>
+                        <span>Mất cân bằng: Class 3 chiếm 86%</span>
+                    </div>
+                </div>
+
+                <div class="dataset-section obb-info">
+                    <h4>TẠI SAO OBB?</h4>
+                    <p>Khuyết tật thường nằm <strong>nghiêng</strong> → OBB xoay theo góc vật thể, chính xác hơn axis-aligned BB.</p>
+                    <code>Format: x,y,w,h,θ (5 params/object)</code>
+                </div>
+            </div>
+
+            <!-- Metrics Tab -->
+            <div class="rpanel-content" id="contentMetrics">
+                <div class="metrics-section">
+                    <h4>KẾT QUẢ TỔNG — YOLOv8N-OBB</h4>
+                    <div class="metric-row">
+                        <span class="metric-name">Precision</span>
+                        <div class="metric-bar-track"><div class="metric-bar-fill" style="width:84.6%;background:#ff5252"></div></div>
+                        <span class="metric-icon">⊙</span>
+                        <span class="metric-val">0.846</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-name">Recall</span>
+                        <div class="metric-bar-track"><div class="metric-bar-fill" style="width:89.2%;background:#69f0ae"></div></div>
+                        <span class="metric-icon">⊙</span>
+                        <span class="metric-val">0.892</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-name">mAP@50</span>
+                        <div class="metric-bar-track"><div class="metric-bar-fill" style="width:93.9%;background:#69f0ae"></div></div>
+                        <span class="metric-icon">⊙</span>
+                        <span class="metric-val">0.939</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-name">mAP50-95</span>
+                        <div class="metric-bar-track"><div class="metric-bar-fill" style="width:93%;background:#69f0ae"></div></div>
+                        <span class="metric-icon">⊙</span>
+                        <span class="metric-val">0.930</span>
+                    </div>
+                    <p class="metrics-speed">Tốc độ: 7.6ms inference · GPU Tesla T4</p>
+                </div>
+
+                <div class="metrics-section">
+                    <h4>THEO TỪNG LỚP</h4>
+                    <div class="per-class-card" style="border-left-color:#ff5252">
+                        <div class="pc-header">
+                            <span class="pc-dot" style="background:#ff5252"></span>
+                            <span class="pc-name">DEFECT_0</span>
+                            <span class="pc-count">77 obj</span>
+                        </div>
+                        <div class="pc-metrics">
+                            <div class="pc-metric"><span class="pc-val">0.908</span><span class="pc-label">P</span></div>
+                            <div class="pc-metric"><span class="pc-val">0.909</span><span class="pc-label">R</span></div>
+                            <div class="pc-metric"><span class="pc-val highlight">0.964</span><span class="pc-label">mAP50</span></div>
+                        </div>
+                    </div>
+                    <div class="per-class-card" style="border-left-color:#69f0ae">
+                        <div class="pc-header">
+                            <span class="pc-dot" style="background:#69f0ae"></span>
+                            <span class="pc-name">DEFECT_1</span>
+                            <span class="pc-count">30 obj</span>
+                        </div>
+                        <div class="pc-metrics">
+                            <div class="pc-metric"><span class="pc-val">0.825</span><span class="pc-label">P</span></div>
+                            <div class="pc-metric"><span class="pc-val">0.943</span><span class="pc-label">R</span></div>
+                            <div class="pc-metric"><span class="pc-val highlight">0.957</span><span class="pc-label">mAP50</span></div>
+                        </div>
+                    </div>
+                    <div class="per-class-card" style="border-left-color:#40c4ff">
+                        <div class="pc-header">
+                            <span class="pc-dot" style="background:#40c4ff"></span>
+                            <span class="pc-name">DEFECT_2</span>
+                            <span class="pc-count">24 obj</span>
+                        </div>
+                        <div class="pc-metrics">
+                            <div class="pc-metric"><span class="pc-val">0.873</span><span class="pc-label">P</span></div>
+                            <div class="pc-metric"><span class="pc-val">0.856</span><span class="pc-label">R</span></div>
+                            <div class="pc-metric"><span class="pc-val highlight">0.942</span><span class="pc-label">mAP50</span></div>
+                        </div>
+                    </div>
+                    <div class="per-class-card" style="border-left-color:#ffd740">
+                        <div class="pc-header">
+                            <span class="pc-dot" style="background:#ffd740"></span>
+                            <span class="pc-name">DEFECT_3</span>
+                            <span class="pc-count">155 obj</span>
+                        </div>
+                        <div class="pc-metrics">
+                            <div class="pc-metric"><span class="pc-val">0.777</span><span class="pc-label">P</span></div>
+                            <div class="pc-metric"><span class="pc-val">0.858</span><span class="pc-label">R</span></div>
+                            <div class="pc-metric"><span class="pc-val highlight">0.892</span><span class="pc-label">mAP50</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metrics-section">
+                    <h4>mAP50 QUA 100 EPOCHS</h4>
+                    <canvas id="mapChart" width="280" height="140"></canvas>
+                </div>
+
+                <!-- Notebook links -->
+                <div class="metrics-section notebook-link-section">
+                    <a href="TGMT_Buoi1_den_Buoi4.ipynb" download class="btn-notebook" id="btnDownloadNb" style="margin-bottom:8px;background:linear-gradient(135deg,#ff6d00,#ffd740);">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M10 3v10M6 10l4 4 4-4"/>
+                            <path d="M3 15v2h14v-2"/>
+                        </svg>
+                        Tải Notebook (.ipynb)
+                    </a>
+                    <a href="https://colab.research.google.com/github/" target="_blank" class="btn-notebook" id="btnNotebook">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="2" width="14" height="16" rx="2"/>
+                            <path d="M7 6h6M7 10h6M7 14h3"/>
+                        </svg>
+                        Mở Notebook trên Colab
+                    </a>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <script src="script.js?v=8"></script>
+</body>
+</html>
